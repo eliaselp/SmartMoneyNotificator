@@ -33,8 +33,11 @@ def analisis():
         
         inicio = time(7, 30)
         fin = time(10, 0)
-        
-        return (inicio <= ahora_ny <= fin) or (inicio <= ahora_londres <= fin)
+        if inicio <= ahora_ny <= fin:
+            return "NY"
+        elif inicio <= ahora_londres <= fin:
+            return "LONDON"
+        return "None"
 
     # Reemplaza con tu token de acceso
     access_token = "f3e904968c185756ff8c5754a27fef3b-2fd77b934184a2d307b3fb46b491e707"
@@ -54,8 +57,17 @@ def analisis():
     ]
 
     # Lista para almacenar los pares que cumplen las condiciones
-    pares_filtrados = []
-    if es_hora_valida():
+    status = {
+        "EUR_USD":0,  # Mercado de Londres y Nueva York
+        "GBP_USD":0,  # Mercado de Londres y Nueva York
+        "USD_CHF":0,  # Mercado de Londres y Nueva York
+        "GBP_CHF":0,  # Mercado de Londres
+        "EUR_GBP":0,  # Mercado de Londres
+        "USD_JPY":0,  # Mercado de Nueva York
+        "AUD_USD":0   # Mercado de Nueva York
+    }
+    Horario = es_hora_valida()
+    if Horario != "None":
         for par in pares_forex:
             # Obtener penúltima vela diaria
             velas_diarias = obtener_velas(api, par, granularity='D', count=2)
@@ -72,13 +84,28 @@ def analisis():
                     # Condiciones para filtrar los pares
                     if (ultima_vela_un_minuto["mid"]["h"] >= penultima_vela_diaria["mid"]["h"] or
                         ultima_vela_un_minuto["mid"]["l"] <= penultima_vela_diaria["mid"]["l"]):
-                        pares_filtrados.append(par)
+                        if status[par]==1:
+                            status[par]=2
+                    else:
+                        status[par]=1
+
     else:
         print("No estamos en el horario correcto")
+        status = {
+            "EUR_USD":0,  # Mercado de Londres y Nueva York
+            "GBP_USD":0,  # Mercado de Londres y Nueva York
+            "USD_CHF":0,  # Mercado de Londres y Nueva York
+            "GBP_CHF":0,  # Mercado de Londres
+            "EUR_GBP":0,  # Mercado de Londres
+            "USD_JPY":0,  # Mercado de Nueva York
+            "AUD_USD":0   # Mercado de Nueva York
+        }
     # Imprimir la lista resultante
     print("Pares de divisas que cumplen las condiciones:")
+    pares_filtrados = [par for par, valor in status.items() if valor == 2]
+
     if pares_filtrados:
-        return pares_filtrados
-    return None
+        return pares_filtrados,Horario
+    return None,Horario
 
 
